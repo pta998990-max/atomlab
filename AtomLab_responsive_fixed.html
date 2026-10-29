@@ -1,0 +1,2730 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ATOM LAB v3.0 - Atomic Models & Quantum Physics Simulator</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+    <style>
+        /* =========================================
+           THEME DESIGN TOKENS
+           ========================================= */
+        :root[data-theme="dark"] {
+            --bg-main: #0B1121;
+            --bg-panel: #161D2D;
+            --bg-card: #0F172A;
+            --bg-hover: #1E293B;
+            --border: #2B3548;
+            --border-subtle: rgba(255, 255, 255, 0.07);
+            --canvas-bg: #050810;
+            --grid-line: rgba(148, 163, 184, 0.06);
+            --text-main: #F8FAFC;
+            --text-muted: #94A3B8;
+            --accent: #A3E635;
+            --accent-text: #090D16;
+            --accent-glow: rgba(163, 230, 53, 0.35);
+            --accent-soft: rgba(163, 230, 53, 0.12);
+            --merit: #4ADE80;
+            --merit-bg: rgba(74, 222, 128, 0.1);
+            --flaw: #F87171;
+            --flaw-bg: rgba(248, 113, 113, 0.1);
+            --cyan: #38BDF8;
+        }
+
+        :root[data-theme="light"] {
+            --bg-main: #F1F5F9;
+            --bg-panel: #FFFFFF;
+            --bg-card: #F8FAFC;
+            --bg-hover: #E2E8F0;
+            --border: #CBD5E1;
+            --border-subtle: rgba(15, 23, 42, 0.08);
+            --canvas-bg: #090D16; /* Keep quantum stage high-contrast dark */
+            --grid-line: rgba(148, 163, 184, 0.09);
+            --text-main: #0F172A;
+            --text-muted: #475569;
+            --accent: #65A30D;
+            --accent-text: #FFFFFF;
+            --accent-glow: rgba(101, 163, 13, 0.25);
+            --accent-soft: rgba(101, 163, 13, 0.12);
+            --merit: #16A34A;
+            --merit-bg: rgba(22, 163, 74, 0.1);
+            --flaw: #DC2626;
+            --flaw-bg: rgba(220, 38, 38, 0.08);
+            --cyan: #0284C7;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+        }
+
+        html, body {
+            width: 100%;
+            height: 100vh;
+            overflow: hidden;
+            background-color: var(--bg-main);
+            color: var(--text-main);
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        body {
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Custom Scrollbars */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: var(--border);
+            border-radius: 999px;
+        }
+
+        /* =========================================
+           TOP HEADER BAR (Fixed 60px)
+           ========================================= */
+        .app-header {
+            height: 60px;
+            flex-shrink: 0;
+            background-color: var(--bg-panel);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 20px;
+            z-index: 100;
+        }
+
+        .brand-wrap {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .brand-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 9px;
+            background: var(--accent-soft);
+            border: 1px solid var(--accent);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--accent);
+            box-shadow: 0 0 15px var(--accent-glow);
+        }
+
+        .brand-title-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .brand-name {
+            font-size: 1.05rem;
+            font-weight: 800;
+            letter-spacing: 0.6px;
+            color: var(--text-main);
+        }
+
+        .version-pill {
+            font-size: 0.68rem;
+            font-weight: 700;
+            padding: 2px 7px;
+            border-radius: 6px;
+            background: var(--accent-soft);
+            color: var(--accent);
+            border: 1px solid var(--accent);
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .brand-subtitle {
+            font-size: 0.72rem;
+            color: var(--text-muted);
+            margin-top: 1px;
+        }
+
+        /* Navigation Tabs */
+        .nav-pills {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            background: var(--bg-card);
+            padding: 4px;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+        }
+
+        .nav-tab {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            padding: 7px 15px;
+            border-radius: 7px;
+            border: none;
+            background: transparent;
+            color: var(--text-muted);
+            font-size: 0.82rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .nav-tab:hover {
+            color: var(--text-main);
+            background: var(--bg-hover);
+        }
+
+        .nav-tab.active {
+            background: var(--accent);
+            color: var(--accent-text);
+            font-weight: 700;
+            box-shadow: 0 0 14px var(--accent-glow);
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .theme-btn {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            padding: 7px 13px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            background: var(--bg-card);
+            color: var(--text-main);
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .theme-btn:hover {
+            border-color: var(--accent);
+            background: var(--bg-hover);
+        }
+
+        /* =========================================
+           MAIN VIEW SWITCHING CONTAINERS
+           ========================================= */
+        .app-viewport {
+            flex: 1;
+            width: 100%;
+            height: calc(100vh - 60px);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .tab-view {
+            display: none;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+        }
+
+        .tab-view.active {
+            display: flex;
+        }
+
+        /* =========================================
+           TAB 1: SIMULATION LAB (Locked 3-Column)
+           ========================================= */
+        .sim-grid {
+            display: flex;
+            flex-direction: row;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+        }
+
+        /* Left Column: Particle Beam Controls */
+        .sim-left-panel {
+            width: 300px;
+            flex-shrink: 0;
+            height: 100%;
+            background: var(--bg-panel);
+            border-right: 1px solid var(--border);
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            overflow-y: auto;
+        }
+
+        /* Center Column: Canvas Stage + Spectrometer */
+        .sim-center-panel {
+            flex: 1;
+            min-width: 0;
+            min-height: 0;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            background: var(--canvas-bg);
+            overflow: hidden;
+        }
+
+        /* Right Column: Model Selector + Takeaways */
+        .sim-right-panel {
+            width: 330px;
+            flex-shrink: 0;
+            height: 100%;
+            background: var(--bg-panel);
+            border-left: 1px solid var(--border);
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            overflow-y: auto;
+        }
+
+        /* Card & Control Styling */
+        .panel-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 14px;
+        }
+
+        .card-header-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 12px;
+        }
+
+        .card-section-label {
+            font-size: 0.73rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .status-badge {
+            font-size: 0.65rem;
+            font-weight: 700;
+            padding: 2px 8px;
+            border-radius: 999px;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            background: rgba(148, 163, 184, 0.15);
+            color: var(--text-muted);
+        }
+
+        .status-badge.live {
+            background: var(--accent-soft);
+            color: var(--accent);
+            border: 1px solid var(--accent);
+        }
+
+        .status-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: currentColor;
+        }
+
+        /* Beam Toggle Button */
+        .emit-btn {
+            width: 100%;
+            padding: 11px 14px;
+            border-radius: 8px;
+            border: 1px solid var(--accent);
+            background: var(--accent);
+            color: var(--accent-text);
+            font-size: 0.84rem;
+            font-weight: 700;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            box-shadow: 0 0 15px var(--accent-glow);
+            transition: all 0.2s;
+            margin-bottom: 16px;
+        }
+
+        .emit-btn.paused {
+            background: var(--bg-hover);
+            color: var(--text-main);
+            border-color: var(--border);
+            box-shadow: none;
+        }
+
+        .emit-btn:hover {
+            filter: brightness(1.06);
+        }
+
+        /* 3-Segment / 4-Segment Particle Selector */
+        .sub-label {
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+            display: block;
+        }
+
+        .particle-seg-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 6px;
+            margin-bottom: 16px;
+        }
+
+        .p-seg-btn {
+            background: var(--bg-panel);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 9px 4px;
+            color: var(--text-muted);
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 3px;
+            transition: all 0.18s;
+        }
+
+        .p-seg-btn .sym {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.82rem;
+            font-weight: 700;
+            color: var(--text-main);
+        }
+
+        .p-seg-btn .lbl {
+            font-size: 0.68rem;
+            font-weight: 600;
+        }
+
+        .p-seg-btn:hover {
+            background: var(--bg-hover);
+        }
+
+        .p-seg-btn.active {
+            border-color: var(--accent);
+            background: var(--accent-soft);
+            color: var(--accent);
+            box-shadow: inset 0 0 8px var(--accent-glow);
+        }
+
+        .p-seg-btn.active .sym {
+            color: var(--accent);
+        }
+
+        /* Sliders */
+        .control-slider-block {
+            margin-bottom: 14px;
+        }
+
+        .slider-top-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.76rem;
+            margin-bottom: 6px;
+        }
+
+        .slider-top-row .s-name {
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        .slider-top-row .s-val {
+            color: var(--accent);
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 700;
+            font-size: 0.75rem;
+        }
+
+        input[type="range"] {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 100%;
+            height: 6px;
+            background: var(--bg-panel);
+            border: 1px solid var(--border);
+            border-radius: 999px;
+            outline: none;
+            cursor: pointer;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 15px;
+            height: 15px;
+            border-radius: 50%;
+            background: var(--accent);
+            box-shadow: 0 0 8px var(--accent-glow);
+            cursor: pointer;
+        }
+
+        /* Toggle Switch Row */
+        .toggle-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding-top: 10px;
+            border-top: 1px solid var(--border-subtle);
+            font-size: 0.8rem;
+            font-weight: 500;
+            color: var(--text-main);
+        }
+
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 40px;
+            height: 22px;
+        }
+
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .switch-slider {
+            position: absolute;
+            cursor: pointer;
+            inset: 0;
+            background-color: var(--bg-panel);
+            border: 1px solid var(--border);
+            transition: .25s;
+            border-radius: 999px;
+        }
+
+        .switch-slider:before {
+            position: absolute;
+            content: "";
+            height: 14px;
+            width: 14px;
+            left: 3px;
+            bottom: 3px;
+            background-color: var(--text-muted);
+            transition: .25s;
+            border-radius: 50%;
+        }
+
+        .switch input:checked + .switch-slider {
+            background-color: var(--accent);
+            border-color: var(--accent);
+        }
+
+        .switch input:checked + .switch-slider:before {
+            transform: translateX(18px);
+            background-color: #090D16;
+        }
+
+        /* =========================================
+           CENTER STAGE & SPECTROMETER
+           ========================================= */
+        .stage-canvas-wrapper {
+            flex: 1;
+            position: relative;
+            width: 100%;
+            min-height: 0;
+            background-color: var(--canvas-bg);
+            background-image:
+                linear-gradient(to right, var(--grid-line) 1px, transparent 1px),
+                linear-gradient(to bottom, var(--grid-line) 1px, transparent 1px);
+            background-size: 36px 36px;
+            overflow: hidden;
+        }
+
+        .stage-canvas-wrapper canvas {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        /* Stage Overlays */
+        .stage-overlay-top-left {
+            position: absolute;
+            top: 16px;
+            left: 16px;
+            background: rgba(15, 23, 42, 0.85);
+            backdrop-filter: blur(8px);
+            border: 1px solid #2B3548;
+            border-radius: 8px;
+            padding: 10px 14px;
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        .stage-overlay-top-left h3 {
+            font-size: 0.85rem;
+            font-weight: 800;
+            color: #A3E635;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+
+        .stage-overlay-top-left p {
+            font-size: 0.73rem;
+            color: #94A3B8;
+            margin-top: 2px;
+        }
+
+        .stage-reset-btn {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            background: rgba(15, 23, 42, 0.85);
+            backdrop-filter: blur(8px);
+            border: 1px solid #2B3548;
+            color: #F8FAFC;
+            padding: 7px 12px;
+            border-radius: 7px;
+            font-size: 0.76rem;
+            font-weight: 600;
+            cursor: pointer;
+            z-index: 10;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s;
+        }
+
+        .stage-reset-btn:hover {
+            border-color: #A3E635;
+            color: #A3E635;
+        }
+
+        .stage-legend-bar {
+            position: absolute;
+            bottom: 14px;
+            left: 16px;
+            background: rgba(15, 23, 42, 0.88);
+            backdrop-filter: blur(8px);
+            border: 1px solid #2B3548;
+            border-radius: 8px;
+            padding: 7px 12px;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            z-index: 10;
+            pointer-events: none;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.72rem;
+            color: #CBD5E1;
+            font-weight: 500;
+        }
+
+        .legend-dot {
+            width: 9px;
+            height: 9px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+
+        .legend-trace {
+            width: 16px;
+            height: 2px;
+            border-top: 2px dashed #A3E635;
+            display: inline-block;
+        }
+
+        /* Bottom Spectrometer Bar */
+        .spectrometer-panel {
+            height: 95px;
+            flex-shrink: 0;
+            background: var(--bg-panel);
+            border-top: 1px solid var(--border);
+            padding: 10px 18px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .spec-header-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.72rem;
+            font-weight: 700;
+        }
+
+        .spec-title {
+            color: var(--text-muted);
+            letter-spacing: 0.6px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .spec-Meta-tags {
+            display: flex;
+            gap: 12px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.69rem;
+        }
+
+        .spec-bar-track {
+            position: relative;
+            width: 100%;
+            height: 28px;
+            border-radius: 6px;
+            overflow: hidden;
+            border: 1px solid var(--border);
+            background: linear-gradient(90deg,
+                #1e0538 0%,
+                #4c1d95 14%,
+                #2563eb 28%,
+                #06b6d4 42%,
+                #22c55e 56%,
+                #eab308 70%,
+                #ef4444 85%,
+                #3b0707 100%
+            );
+        }
+
+        .spec-line-marker {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 3px;
+            background: #FFFFFF;
+            box-shadow: 0 0 10px #FFFFFF, 0 0 18px var(--accent);
+            transition: opacity 0.3s, transform 0.2s;
+            pointer-events: none;
+        }
+
+        .spec-line-marker.flash {
+            width: 5px;
+            box-shadow: 0 0 16px #FFFFFF, 0 0 28px #FFFFFF;
+            z-index: 5;
+        }
+
+        .spec-line-tag {
+            position: absolute;
+            top: 2px;
+            transform: translateX(-50%);
+            font-size: 0.58rem;
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 700;
+            color: #FFFFFF;
+            background: rgba(9, 13, 22, 0.82);
+            padding: 1px 4px;
+            border-radius: 3px;
+            white-space: nowrap;
+            pointer-events: none;
+        }
+
+        .spec-scale-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.66rem;
+            color: var(--text-muted);
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* =========================================
+           RIGHT PANEL: MODEL SELECTOR & TAKEAWAYS
+           ========================================= */
+        .model-list-stack {
+            display: flex;
+            flex-direction: column;
+            gap: 7px;
+        }
+
+        .model-card-btn {
+            width: 100%;
+            text-align: left;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 10px 12px;
+            color: var(--text-main);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            transition: all 0.18s ease;
+        }
+
+        .model-card-btn:hover {
+            background: var(--bg-hover);
+        }
+
+        .model-card-btn .m-title {
+            font-size: 0.82rem;
+            font-weight: 700;
+            color: var(--text-main);
+        }
+
+        .model-card-btn .m-sub {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            margin-top: 2px;
+        }
+
+        .model-card-btn .m-arrow {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            transition: transform 0.2s;
+        }
+
+        .model-card-btn.active {
+            border-color: var(--accent);
+            background: var(--accent-soft);
+            box-shadow: 0 0 12px var(--accent-glow);
+        }
+
+        .model-card-btn.active .m-title,
+        .model-card-btn.active .m-arrow {
+            color: var(--accent);
+        }
+
+        .takeaway-section {
+            margin-top: 10px;
+        }
+
+        .takeaway-block {
+            margin-bottom: 12px;
+        }
+
+        .takeaway-block:last-child {
+            margin-bottom: 0;
+        }
+
+        .takeaway-block h5 {
+            font-size: 0.72rem;
+            font-weight: 700;
+            color: var(--text-main);
+            margin-bottom: 3px;
+        }
+
+        .takeaway-block p {
+            font-size: 0.76rem;
+            line-height: 1.48;
+            color: var(--text-muted);
+        }
+
+        .takeaway-block.flaw h5 {
+            color: var(--flaw);
+        }
+
+        /* =========================================
+           TAB 2: COMPARE MODELS (Side-by-Side 3D + Info)
+           ========================================= */
+        .compare-view-wrapper {
+            width: 100%;
+            height: 100%;
+            padding: 20px 26px;
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+            overflow-y: auto;
+        }
+
+        .compare-top-bar {
+            background: var(--bg-panel);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 16px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 16px;
+            flex-shrink: 0;
+        }
+
+        .compare-top-bar h2 {
+            font-size: 1.15rem;
+            font-weight: 800;
+            color: var(--text-main);
+        }
+
+        .compare-top-bar p {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-top: 3px;
+        }
+
+        .compare-selectors {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .comp-select-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            padding: 6px 12px;
+            border-radius: 8px;
+        }
+
+        .comp-select-group span {
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: var(--text-muted);
+        }
+
+        .comp-select-group select {
+            background: transparent;
+            color: var(--text-main);
+            border: none;
+            font-size: 0.84rem;
+            font-weight: 700;
+            outline: none;
+            cursor: pointer;
+        }
+
+        .comp-select-group select option {
+            background: var(--bg-panel);
+            color: var(--text-main);
+        }
+
+        .vs-pill {
+            font-size: 0.75rem;
+            font-weight: 800;
+            color: var(--accent);
+            padding: 4px 8px;
+            border-radius: 6px;
+            background: var(--accent-soft);
+        }
+
+        .compare-cards-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            flex: 1;
+            min-height: 520px;
+        }
+
+        .compare-card {
+            background: var(--bg-panel);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .compare-card-head {
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .year-tag {
+            display: inline-block;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.72rem;
+            font-weight: 700;
+            padding: 2px 8px;
+            border-radius: 5px;
+            background: var(--accent-soft);
+            color: var(--accent);
+            margin-bottom: 4px;
+        }
+
+        .compare-card-head h3 {
+            font-size: 1.15rem;
+            font-weight: 800;
+            color: var(--text-main);
+        }
+
+        .compare-card-head p {
+            font-size: 0.78rem;
+            color: var(--text-muted);
+        }
+
+        /* Side-by-Side 3D Model Canvas Box */
+        .compare-canvas-stage {
+            height: 250px;
+            flex-shrink: 0;
+            position: relative;
+            background-color: var(--canvas-bg);
+            background-image:
+                linear-gradient(to right, var(--grid-line) 1px, transparent 1px),
+                linear-gradient(to bottom, var(--grid-line) 1px, transparent 1px);
+            background-size: 28px 28px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .compare-canvas-stage canvas {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        .compare-3d-badge {
+            position: absolute;
+            bottom: 10px;
+            right: 12px;
+            font-size: 0.68rem;
+            font-family: 'JetBrains Mono', monospace;
+            color: #94A3B8;
+            background: rgba(15, 23, 42, 0.8);
+            border: 1px solid #2B3548;
+            padding: 3px 8px;
+            border-radius: 5px;
+            pointer-events: none;
+        }
+
+        .compare-details-body {
+            padding: 18px 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            flex: 1;
+        }
+
+        .comp-info-box {
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            padding: 11px 14px;
+        }
+
+        .comp-info-box h5 {
+            font-size: 0.7rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.7px;
+            color: var(--text-muted);
+            margin-bottom: 4px;
+        }
+
+        .comp-info-box p {
+            font-size: 0.82rem;
+            line-height: 1.5;
+            color: var(--text-main);
+        }
+
+        .comp-info-box.merit {
+            border-left: 3px solid var(--merit);
+            background: var(--merit-bg);
+        }
+        .comp-info-box.merit h5 {
+            color: var(--merit);
+        }
+
+        .comp-info-box.flaw {
+            border-left: 3px solid var(--flaw);
+            background: var(--flaw-bg);
+        }
+        .comp-info-box.flaw h5 {
+            color: var(--flaw);
+        }
+
+        /* =========================================
+           TAB 3: SCIENTIST RESEARCH
+           ========================================= */
+        .research-view-wrapper {
+            width: 100%;
+            height: 100%;
+            padding: 22px 26px;
+            overflow-y: auto;
+        }
+
+        .research-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 18px;
+            margin-top: 16px;
+        }
+
+        .scientist-card {
+            background: var(--bg-panel);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 18px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .scientist-card-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 10px;
+        }
+
+        .scientist-card-top h3 {
+            font-size: 1.05rem;
+            font-weight: 800;
+            color: var(--accent);
+        }
+
+        .scientist-card-top span {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            font-weight: 600;
+        }
+    
+
+        /* =========================================
+           RESPONSIVE LAYOUT + ACCESSIBILITY HARDENING
+           ========================================= */
+        img, canvas, svg { max-width: 100%; }
+        button, input, select { font: inherit; }
+        button:focus-visible, select:focus-visible, input:focus-visible, a:focus-visible {
+            outline: 3px solid var(--cyan);
+            outline-offset: 3px;
+        }
+        .nav-pills { min-width: 0; }
+        .app-header, .brand-wrap, .header-actions { min-width: 0; }
+        .brand-subtitle { line-height: 1.35; }
+        .sim-left-panel, .sim-right-panel, .compare-view-wrapper, .research-view-wrapper {
+            overscroll-behavior: contain;
+        }
+        .sim-left-panel, .sim-right-panel { scrollbar-gutter: stable; }
+        .compare-card, .scientist-card, .panel-card { min-width: 0; }
+        .compare-details-body p, .takeaway-block p { overflow-wrap: anywhere; }
+        @media (max-width: 1350px) {
+            .sim-left-panel { width: 255px; padding: 12px; }
+            .sim-right-panel { width: 285px; padding: 12px; }
+            .app-header { padding-inline: 14px; gap: 12px; }
+            .nav-tab { padding-inline: 10px; }
+            .brand-subtitle { font-size: .68rem; }
+        }
+        @media (max-width: 1050px) {
+            html, body { height: auto; min-height: 100%; overflow: auto; }
+            body { min-height: 100dvh; }
+            .app-header {
+                height: auto; min-height: 60px; flex-wrap: wrap;
+                padding: 10px 14px; gap: 10px;
+            }
+            .brand-wrap { flex: 1 1 240px; }
+            .header-actions { margin-left: auto; }
+            .nav-pills {
+                order: 3; flex: 1 0 100%; width: 100%; overflow-x: auto;
+                justify-content: flex-start; scrollbar-width: thin;
+            }
+            .nav-tab { flex: 0 0 auto; white-space: nowrap; }
+            .app-viewport { height: auto; min-height: calc(100dvh - 60px); overflow: visible; }
+            .tab-view { height: auto; min-height: calc(100dvh - 120px); overflow: visible; }
+            .tab-view.active { display: block; }
+            .sim-grid {
+                height: auto; min-height: 0; overflow: visible;
+                display: grid; grid-template-columns: minmax(0, 1fr) minmax(250px, .8fr);
+                grid-template-areas: "stage stage" "controls models";
+                align-items: start;
+            }
+            .sim-center-panel { grid-area: stage; height: min(68vh, 650px); min-height: 390px; }
+            .sim-left-panel { grid-area: controls; width: auto; height: auto; min-width: 0; border-right: 1px solid var(--border); }
+            .sim-right-panel { grid-area: models; width: auto; height: auto; min-width: 0; border-left: 0; }
+            .stage-legend-bar { max-width: calc(100% - 32px); flex-wrap: wrap; gap: 8px 12px; }
+            .compare-view-wrapper, .research-view-wrapper { height: auto; overflow: visible; padding: 18px; }
+            .compare-cards-grid { min-height: 0; }
+            .research-grid { grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr)); }
+        }
+        @media (max-width: 700px) {
+            .brand-name { font-size: .98rem; }
+            .version-pill { font-size: .58rem; padding: 2px 5px; }
+            .brand-subtitle { max-width: 230px; font-size: .65rem; }
+            .theme-btn { padding: 8px 10px; font-size: .74rem; }
+            .sim-grid { grid-template-columns: minmax(0, 1fr); grid-template-areas: "stage" "models" "controls"; }
+            .sim-center-panel { height: 58vh; min-height: 340px; max-height: 540px; }
+            .sim-right-panel, .sim-left-panel { border: 0; border-top: 1px solid var(--border); padding: 14px; }
+            .sim-right-panel { gap: 12px; }
+            .stage-overlay-top-left { top: 10px; left: 10px; padding: 8px 10px; max-width: calc(100% - 100px); }
+            .stage-overlay-top-left h3 { font-size: .72rem; }
+            .stage-overlay-top-left p { font-size: .64rem; }
+            .stage-reset-btn { top: 10px; right: 10px; padding: 7px 8px; font-size: .68rem; }
+            .stage-legend-bar { left: 10px; bottom: 10px; max-width: calc(100% - 20px); padding: 6px 8px; gap: 6px 10px; }
+            .legend-item { font-size: .63rem; }
+            .legend-dot { width: 7px; height: 7px; }
+            .spectrometer-panel { height: auto; min-height: 90px; padding: 10px 12px; gap: 8px; }
+            .spec-header-row { align-items: flex-start; gap: 8px; flex-wrap: wrap; }
+            .spec-title { font-size: .63rem; }
+            .spec-Meta-tags { flex-wrap: wrap; gap: 6px 10px; font-size: .6rem; }
+            .spec-scale-row { font-size: .58rem; }
+            .compare-view-wrapper, .research-view-wrapper { padding: 12px; }
+            .compare-top-bar { padding: 14px; align-items: stretch; }
+            .compare-top-bar h2 { font-size: 1rem; }
+            .compare-top-bar p { line-height: 1.5; }
+            .compare-selectors { flex-wrap: wrap; gap: 8px; }
+            .comp-select-group { flex: 1 1 130px; min-width: 0; justify-content: space-between; }
+            .comp-select-group select { min-width: 0; max-width: 68%; font-size: .75rem; }
+            .compare-cards-grid { grid-template-columns: minmax(0, 1fr); gap: 14px; }
+            .compare-canvas-stage { height: 220px; }
+            .compare-card-head { padding: 14px; }
+            .compare-details-body { padding: 14px; }
+            .research-grid { grid-template-columns: minmax(0, 1fr); }
+            .scientist-card { padding: 14px; }
+        }
+        @media (max-width: 380px) {
+            .brand-icon { width: 30px; height: 30px; }
+            .brand-wrap { gap: 8px; }
+            .brand-subtitle { max-width: 185px; }
+            .theme-btn { gap: 4px; padding: 7px 8px; }
+            .nav-tab { padding: 7px 9px; font-size: .75rem; }
+            .particle-seg-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+            .spec-scale-row span:nth-child(even) { display: none; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+        }
+
+    </style>
+</head>
+<body>
+
+    <!-- =========================================
+         TOP HEADER BAR
+         ========================================= -->
+    <header class="app-header">
+        <div class="brand-wrap">
+            <div class="brand-icon">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                    <circle cx="12" cy="12" r="2.5"/>
+                    <ellipse cx="12" cy="12" rx="10" ry="4.2" transform="rotate(30 12 12)"/>
+                    <ellipse cx="12" cy="12" rx="10" ry="4.2" transform="rotate(-30 12 12)"/>
+                </svg>
+            </div>
+            <div>
+                <div class="brand-title-row">
+                    <span class="brand-name">AtomLab</span>
+                    <span class="version-pill">v3.0 Science Fair</span>
+                </div>
+                <div class="brand-subtitle">Atomic Models &amp; Quantum Physics Simulator</div>
+            </div>
+        </div>
+
+        <nav class="nav-pills">
+            <button class="nav-tab active" data-tab="tab-sim">
+                <span>⚡</span> Simulation Lab
+            </button>
+            <button class="nav-tab" data-tab="tab-compare">
+                <span>⚖️</span> Compare Models
+            </button>
+            <button class="nav-tab" data-tab="tab-research">
+                <span>🔬</span> Scientist Research
+            </button>
+        </nav>
+
+        <div class="header-actions">
+            <button class="theme-btn" id="themeToggleBtn">
+                <span id="themeIcon">🌙</span>
+                <span id="themeLabel">Dark Mode</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- =========================================
+         MAIN VIEWPORT
+         ========================================= -->
+    <main class="app-viewport">
+
+        <!-- TAB 1: SIMULATION LAB -->
+        <section id="tab-sim" class="tab-view active">
+            <div class="sim-grid">
+
+                <!-- LEFT PANEL: PARTICLE BEAM CONTROLS -->
+                <aside class="sim-left-panel">
+                    <div class="panel-card">
+                        <div class="card-header-row">
+                            <span class="card-section-label">⚡ PARTICLE BEAM GUN</span>
+                            <span class="status-badge live" id="beamStatusBadge">
+                                <span class="status-dot"></span>
+                                <span id="beamStatusText">ACTIVE</span>
+                            </span>
+                        </div>
+
+                        <button class="emit-btn" id="beamToggleBtn">
+                            ⏸ Pause Beam Emission
+                        </button>
+
+                        <span class="sub-label">PARTICLE TYPE</span>
+                        <div class="particle-seg-grid">
+                            <button class="p-seg-btn" data-ptype="proton">
+                                <span class="sym">p⁺</span>
+                                <span class="lbl">Proton</span>
+                            </button>
+                            <button class="p-seg-btn" data-ptype="electron">
+                                <span class="sym">e⁻</span>
+                                <span class="lbl">Electron</span>
+                            </button>
+                            <button class="p-seg-btn active" data-ptype="alpha">
+                                <span class="sym">α²⁺</span>
+                                <span class="lbl">Alpha</span>
+                            </button>
+                            <button class="p-seg-btn" data-ptype="photon">
+                                <span class="sym">γ</span>
+                                <span class="lbl">Photon</span>
+                            </button>
+                        </div>
+
+                        <div class="control-slider-block">
+                            <div class="slider-top-row">
+                                <span class="s-name">Beam Energy / Speed</span>
+                                <span class="s-val" id="energyValLabel">5.0 MeV</span>
+                            </div>
+                            <input type="range" id="energySlider" min="1.0" max="10.0" step="0.5" value="5.0">
+                        </div>
+
+
+                        <div class="control-slider-block">
+                            <div class="slider-top-row">
+                                <span class="s-name">Beam Density (Rate)</span>
+                                <span class="s-val" id="densityValLabel">Medium</span>
+                            </div>
+                            <input type="range" id="densitySlider" min="1" max="3" step="1" value="2">
+                        </div>
+
+                        <div class="toggle-row">
+                            <span>Show Trajectory Traces</span>
+                            <label class="switch">
+                                <input type="checkbox" id="traceToggle" checked>
+                                <span class="switch-slider"></span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="panel-card">
+                        <div class="card-header-row">
+                            <span class="card-section-label">📊 LIVE TELEMETRY</span>
+                        </div>
+                        <div class="takeaway-block">
+                            <h5>Deflection Behavior</h5>
+                            <p id="telemetryReadout">Elastic surface reflection off impenetrable billiard-ball boundary.</p>
+                        </div>
+                    </div>
+                </aside>
+
+                <!-- CENTER PANEL: INTERACTIVE CANVAS + SPECTROMETER -->
+                <section class="sim-center-panel">
+                    <div class="stage-canvas-wrapper" id="simStageWrapper">
+                        <div class="stage-overlay-top-left">
+                            <h3 id="stageModelTitle">DALTON MODEL (1803)</h3>
+                            <p id="stageModelSub">Hard Solid Billiard Ball Model</p>
+                        </div>
+
+                        <button class="stage-reset-btn" id="resetStageBtn">
+                            ↺ Reset Stage
+                        </button>
+
+                        <div class="stage-legend-bar">
+                            <div class="legend-item">
+                                <span class="legend-dot" style="background:#A3E635;"></span> Proton
+                            </div>
+                            <div class="legend-item">
+                                <span class="legend-dot" style="background:#94A3B8;"></span> Neutron
+                            </div>
+                            <div class="legend-item">
+                                <span class="legend-dot" style="background:#38BDF8;"></span> Electron
+                            </div>
+                            <div class="legend-item">
+                                <span class="legend-dot" style="background:#F59E0B;"></span> Alpha (α)
+                            </div>
+                            <div class="legend-item">
+                                <span class="legend-dot" style="background:#C084FC;"></span> Photon (γ)
+                            </div>
+                            <div class="legend-item">
+                                <span class="legend-trace"></span> Trace
+                            </div>
+                        </div>
+
+                        <canvas id="simCanvas" role="img" aria-label="Animated atomic model and particle beam simulation"></canvas>
+                    </div>
+
+                    <!-- SPECTROMETER BAR -->
+                    <div class="spectrometer-panel">
+                        <div class="spec-header-row">
+                            <span class="spec-title">🌈 SPECTROMETER (EMITTED / ABSORBED PHOTONS)</span>
+                            <div class="spec-Meta-tags">
+                                <span style="color:#A855F7;">UV (&lt;400nm)</span>
+                                <span style="color:#38BDF8;">Visible (400-700nm)</span>
+                                <span style="color:#F87171;">IR (&gt;700nm)</span>
+                            </div>
+                        </div>
+                        <div class="spec-bar-track" id="specBarTrack"></div>
+                        <div class="spec-scale-row">
+                            <span>200 nm</span>
+                            <span>320 nm</span>
+                            <span>440 nm</span>
+                            <span>560 nm</span>
+                            <span>680 nm</span>
+                            <span>800 nm</span>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- RIGHT PANEL: ATOMIC MODEL SELECTOR + TAKEAWAYS -->
+                <aside class="sim-right-panel">
+                    <div class="panel-card">
+                        <div class="card-header-row">
+                            <span class="card-section-label">⚛ SELECT ATOMIC MODEL</span>
+                            <span class="version-pill" id="modelIndexCounter">1 / 5</span>
+                        </div>
+
+                        <div class="model-list-stack" id="modelSelectorList">
+                            <button class="model-card-btn active" data-model="dalton" data-idx="1">
+                                <div>
+                                    <div class="m-title">1. Dalton (1803)</div>
+                                    <div class="m-sub">Solid Sphere Model</div>
+                                </div>
+                                <span class="m-arrow">→</span>
+                            </button>
+
+                            <button class="model-card-btn" data-model="thomson" data-idx="2">
+                                <div>
+                                    <div class="m-title">2. Thomson (1904)</div>
+                                    <div class="m-sub">Plum Pudding Model</div>
+                                </div>
+                                <span class="m-arrow">→</span>
+                            </button>
+
+                            <button class="model-card-btn" data-model="rutherford" data-idx="3">
+                                <div>
+                                    <div class="m-title">3. Rutherford (1911)</div>
+                                    <div class="m-sub">Nuclear Gold Foil Model</div>
+                                </div>
+                                <span class="m-arrow">→</span>
+                            </button>
+
+                            <button class="model-card-btn" data-model="bohr" data-idx="4">
+                                <div>
+                                    <div class="m-title">4. Bohr (1913)</div>
+                                    <div class="m-sub">Quantized Planetary Orbits</div>
+                                </div>
+                                <span class="m-arrow">→</span>
+                            </button>
+
+                            <button class="model-card-btn" data-model="schrodinger" data-idx="5">
+                                <div>
+                                    <div class="m-title">5. Schrödinger (1926)</div>
+                                    <div class="m-sub">Quantum Wave Cloud</div>
+                                </div>
+                                <span class="m-arrow">→</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="panel-card takeaway-section">
+                        <div class="card-header-row">
+                            <span class="card-section-label" style="color:var(--accent);">💡 MODEL KEY TAKEAWAYS</span>
+                        </div>
+
+                        <div class="takeaway-block">
+                            <h5>Core Postulate:</h5>
+                            <p id="tkPostulate"></p>
+                        </div>
+
+                        <div class="takeaway-block">
+                            <h5>Scattering Reaction:</h5>
+                            <p id="tkScattering"></p>
+                        </div>
+
+                        <div class="takeaway-block flaw">
+                            <h5>Main Limitation:</h5>
+                            <p id="tkFlaw"></p>
+                        </div>
+                    </div>
+                </aside>
+
+            </div>
+        </section>
+
+        <!-- TAB 2: COMPARE MODELS (Side-by-Side 3D Visuals + Breakdown) -->
+        <section id="tab-compare" class="tab-view">
+            <div class="compare-view-wrapper">
+                <div class="compare-top-bar">
+                    <div>
+                        <h2>Side-by-Side Model Comparison</h2>
+                        <p>Compare 3D atomic structures, key breakthroughs, and structural limitations side by side.</p>
+                    </div>
+
+                    <div class="compare-selectors">
+                        <div class="comp-select-group">
+                            <span>Model A:</span>
+                            <select id="compSelectA">
+                                <option value="dalton">1. Dalton (1803)</option>
+                                <option value="thomson" selected>2. Thomson (1904)</option>
+                                <option value="rutherford">3. Rutherford (1911)</option>
+                                <option value="bohr">4. Bohr (1913)</option>
+                                <option value="schrodinger">5. Schrödinger (1926)</option>
+                            </select>
+                        </div>
+                        <span class="vs-pill">VS</span>
+                        <div class="comp-select-group">
+                            <span>Model B:</span>
+                            <select id="compSelectB">
+                                <option value="dalton">1. Dalton (1803)</option>
+                                <option value="thomson">2. Thomson (1904)</option>
+                                <option value="rutherford" selected>3. Rutherford (1911)</option>
+                                <option value="bohr">4. Bohr (1913)</option>
+                                <option value="schrodinger">5. Schrödinger (1926)</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="compare-cards-grid">
+                    <!-- LEFT COMPARISON COLUMN -->
+                    <div class="compare-card">
+                        <div class="compare-card-head">
+                            <div>
+                                <span class="year-tag" id="compYearA">1904</span>
+                                <h3 id="compTitleA">J.J. Thomson Model</h3>
+                                <p id="compSubA">Plum Pudding Model</p>
+                            </div>
+                        </div>
+                        <div class="compare-canvas-stage" id="compStageA">
+                            <canvas id="compCanvasA" role="img" aria-label="First selected atomic model comparison"></canvas>
+                            <span class="compare-3d-badge">3D Interactive View (No Beam)</span>
+                        </div>
+                        <div class="compare-details-body" id="compBodyA"></div>
+                    </div>
+
+                    <!-- RIGHT COMPARISON COLUMN -->
+                    <div class="compare-card">
+                        <div class="compare-card-head">
+                            <div>
+                                <span class="year-tag" id="compYearB">1911</span>
+                                <h3 id="compTitleB">Ernest Rutherford Model</h3>
+                                <p id="compSubB">Nuclear Model (Gold Foil Experiment)</p>
+                            </div>
+                        </div>
+                        <div class="compare-canvas-stage" id="compStageB">
+                            <canvas id="compCanvasB" role="img" aria-label="Second selected atomic model comparison"></canvas>
+                            <span class="compare-3d-badge">3D Interactive View (No Beam)</span>
+                        </div>
+                        <div class="compare-details-body" id="compBodyB"></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 3: SCIENTIST RESEARCH -->
+        <section id="tab-research" class="tab-view">
+            <div class="research-view-wrapper">
+                <div class="compare-top-bar">
+                    <div>
+                        <h2>Historical Scientist Research &amp; Exhibition Notes</h2>
+                        <p>Comprehensive breakdown of objectives, experimental setups, merits, and demerits across atomic theory history.</p>
+                    </div>
+                </div>
+                <div class="research-grid" id="researchCardsContainer"></div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- =========================================
+         APPLICATION SCRIPT & PHYSICS ENGINE
+         ========================================= -->
+    <script>
+        const ATOMIC_MODELS = {
+            dalton: {
+                year: "1803",
+                shortTitle: "DALTON MODEL (1803)",
+                fullName: "John Dalton Model",
+                subtitle: "Hard Solid Billiard Ball Model",
+                postulate: "Matter consists of tiny, indivisible spherical atoms. Atoms of a given element are identical in mass and chemical properties.",
+                scattering: "Particles physically collide with the hard elastic sphere surface and bounce back at opposing angles.",
+                merit: "Explained the Law of Conservation of Mass and Law of Definite Proportions in chemical reactions.",
+                flaw: "Failed to account for subatomic particles (electrons, protons, neutrons), isotopes, or electrical charges.",
+                experiment: "Quantitative gas pressure ratios and chemical mass combination experiments."
+            },
+            thomson: {
+                year: "1904",
+                shortTitle: "THOMSON MODEL (1904)",
+                fullName: "J.J. Thomson Model",
+                subtitle: "Plum Pudding Model",
+                postulate: "The atom is a uniform positively charged sphere of fluid with negatively charged electrons embedded inside like plums in pudding.",
+                scattering: "Particles pass almost straight through the diffuse positive sphere with only tiny, negligible angular vibrations.",
+                merit: "Discovered the electron (first subatomic particle) using Cathode Ray Tubes in 1897 and explained electrical neutrality.",
+                flaw: "Could not explain large-angle alpha particle deflections observed in Rutherford's 1911 Gold Foil experiment.",
+                experiment: "Cathode Ray Tube (CRT) magnetic and electric field deflection experiments."
+            },
+            rutherford: {
+                year: "1911",
+                shortTitle: "RUTHERFORD MODEL (1911)",
+                fullName: "Ernest Rutherford Model",
+                subtitle: "Nuclear Model (Gold Foil Experiment)",
+                postulate: "The atom is mostly empty space with nearly all mass and positive charge concentrated in a tiny central nucleus.",
+                scattering: "Alpha particles passing near the dense nucleus experience strong Coulomb electrostatic repulsion (F = k·q₁q₂/r²) and deflect along hyperbolic paths.",
+                merit: "Discovered the dense atomic nucleus via the famous Gold Foil Alpha Scattering Experiment.",
+                flaw: "Classical electrodynamics predicts accelerating orbiting electrons should continuously radiate energy and spiral into the nucleus within 10⁻¹¹ seconds.",
+                experiment: "Bombarding thin gold foil (10⁻⁷ m) with alpha particles and measuring ZnS screen flashes."
+            },
+            bohr: {
+                year: "1913",
+                shortTitle: "BOHR MODEL (1913)",
+                fullName: "Niels Bohr Model",
+                subtitle: "Quantized Planetary Orbits & Shell Jumping",
+                postulate: "Electrons orbit the nucleus in discrete, quantized circular energy shells (n = 1 to 6) without radiating energy continuously.",
+                scattering: "Incoming photons/particles excite the electron to a higher shell (n > 1); when it relaxes back down, it emits a quantized photon wave packet (ΔE = hν).",
+                merit: "Explained atomic stability and accurately calculated the Lyman (UV), Balmer (Visible), and Paschen (IR) spectral lines of Hydrogen.",
+                flaw: "Fails for multi-electron atoms, cannot explain Zeeman/Stark splitting, and violates Heisenberg's Uncertainty Principle.",
+                experiment: "Hydrogen gas discharge tube spectroscopy and Planck quantum analysis."
+            },
+            schrodinger: {
+                year: "1926",
+                shortTitle: "SCHRÖDINGER MODEL (1926)",
+                fullName: "Erwin Schrödinger Model",
+                subtitle: "Quantum Wave Cloud Model",
+                postulate: "Electrons do not follow fixed tracks; they exist as 3D standing matter-waves in probability density orbitals (|ψ|²).",
+                scattering: "Particles interact with the central nuclear potential screened by a continuous 3D quantum electron probability cloud.",
+                merit: "Foundation of modern quantum mechanics; accurately models complex multi-electron atoms and chemical bonding.",
+                flaw: "Abandons deterministic trajectories; only provides statistical probability of finding an electron at a given point.",
+                experiment: "Wave mechanics formulation (Ĥψ = Eψ) combining de Broglie wavelength and Heisenberg uncertainty."
+            }
+        };
+
+        // Application State
+        let activeTab = 'tab-sim';
+        let currentModel = 'dalton';
+        let beamActive = true;
+        let particleType = 'alpha'; // 'proton', 'electron', 'alpha', 'photon'
+        let beamEnergy = 5.0;
+        let beamDensity = 2; // 1=Low, 2=Medium, 3=High
+        let showTraces = true;
+        let particles = [];
+        let simTime = 0;
+
+        // =========================================
+        // BOHR QUANTUM SHELL JUMPING STATE (PhET Style)
+        // =========================================
+        const BOHR_SHELL_RADII = [0, 26, 46, 66, 86, 106, 126]; // 1-indexed n=1..6
+        const BOHR_PALETTE = [
+            { nm: 122, color: '#A855F7', label: '122nm (UV)', targetN: 2 },
+            { nm: 103, color: '#C084FC', label: '103nm (UV)', targetN: 3 },
+            { nm: 97,  color: '#9333EA', label: '97nm (UV)',  targetN: 4 },
+            { nm: 410, color: '#8B5CF6', label: '410nm',      targetN: 6 },
+            { nm: 434, color: '#3B82F6', label: '434nm',      targetN: 5 },
+            { nm: 486, color: '#06B6D4', label: '486nm',      targetN: 4 },
+            { nm: 536, color: '#22C55E', label: '536nm',      targetN: 3 },
+            { nm: 602, color: '#EAB308', label: '602nm',      targetN: 5 },
+            { nm: 656, color: '#EF4444', label: '656nm',      targetN: 3 }
+        ];
+
+        const bohrState = {
+            currentN: 1,
+            displayN: 1,
+            angle: 0,
+            relaxTimer: 0,
+            lastTransition: null, // { fromN, toN, color, type: 'absorb'|'emit', timer, maxTimer }
+            absorptionRipples: [], // { r, color, alpha }
+            emittedPhotons: [],    // outgoing wavy photon packets
+            recordedLines: []      // { nm, color, flashTimer }
+        };
+
+        function getTransitionData(fromN, toN) {
+            const high = Math.max(fromN, toN);
+            const low = Math.min(fromN, toN);
+            // Accurate Hydrogen Spectral Series mapping (Lyman, Balmer, Paschen)
+            if (low === 1) {
+                if (high === 2) return { nm: 122, color: '#A855F7' };
+                if (high === 3) return { nm: 103, color: '#C084FC' };
+                return { nm: 95, color: '#9333EA' };
+            }
+            if (low === 2) {
+                if (high === 3) return { nm: 656, color: '#EF4444' }; // H-alpha Red
+                if (high === 4) return { nm: 486, color: '#06B6D4' }; // H-beta Cyan
+                if (high === 5) return { nm: 434, color: '#3B82F6' }; // H-gamma Blue
+                return { nm: 410, color: '#8B5CF6' };                 // H-delta Violet
+            }
+            if (low === 3) {
+                if (high === 4) return { nm: 740, color: '#F87171' }; // IR
+                if (high === 5) return { nm: 602, color: '#EAB308' }; // Amber/Orange
+                return { nm: 536, color: '#22C55E' };                 // Green
+            }
+            return { nm: 760, color: '#FB7185' };
+        }
+
+        function recordSpectrometerLine(nm, color) {
+            const track = document.getElementById('specBarTrack');
+            if (!track) return;
+
+            // Map 90nm..800nm onto 4%..96% of the spectrometer bar
+            const clamped = Math.max(90, Math.min(790, nm));
+            let pct;
+            if (clamped < 400) {
+                // UV region (0% to 26%)
+                pct = 4 + ((clamped - 90) / 310) * 22;
+            } else if (clamped <= 700) {
+                // Visible region (26% to 82%)
+                pct = 26 + ((clamped - 400) / 300) * 56;
+            } else {
+                // IR region (82% to 96%)
+                pct = 82 + ((clamped - 700) / 100) * 14;
+            }
+
+            let existing = bohrState.recordedLines.find(l => Math.abs(l.nm - nm) < 3);
+            if (!existing) {
+                const marker = document.createElement('div');
+                marker.className = 'spec-line-marker flash';
+                marker.style.left = `${pct.toFixed(1)}%`;
+                marker.style.background = color;
+                marker.style.boxShadow = `0 0 10px ${color}, 0 0 20px #FFFFFF`;
+
+                const tag = document.createElement('span');
+                tag.className = 'spec-line-tag';
+                tag.textContent = `${nm}nm`;
+                marker.appendChild(tag);
+
+                track.appendChild(marker);
+                existing = { nm, color, el: marker };
+                bohrState.recordedLines.push(existing);
+            } else {
+                existing.el.classList.add('flash');
+            }
+
+            setTimeout(() => {
+                if (existing && existing.el) {
+                    existing.el.classList.remove('flash');
+                }
+            }, 450);
+        }
+
+        function triggerBohrExcitation(targetShell, incomingColor) {
+            const fromN = bohrState.currentN;
+            if (targetShell <= fromN || targetShell > 6) return;
+
+            const tData = getTransitionData(fromN, targetShell);
+            const activeColor = incomingColor || tData.color;
+
+            bohrState.currentN = targetShell;
+            bohrState.relaxTimer = 85 + Math.floor(Math.random() * 45); // ~1.6 to 2.2 sec lifetime
+            bohrState.lastTransition = {
+                fromN,
+                toN: targetShell,
+                color: activeColor,
+                type: 'absorb',
+                timer: 48,
+                maxTimer: 48
+            };
+            bohrState.absorptionRipples.push({
+                r: BOHR_SHELL_RADII[fromN],
+                targetR: BOHR_SHELL_RADII[targetShell],
+                color: activeColor,
+                alpha: 1.0
+            });
+
+            document.getElementById('telemetryReadout').textContent =
+                `Photon absorbed! Electron jumped UP from shell n = ${fromN} → n = ${targetShell}.`;
+        }
+
+        function triggerBohrRelaxation() {
+            const fromN = bohrState.currentN;
+            if (fromN <= 1) return;
+
+            // Either jump directly to n=1 or n=2 (Balmer visible series) or step down
+            let toN = 1;
+            if (fromN >= 3 && Math.random() < 0.65) {
+                toN = 2; // Favors visible Balmer lines (656nm red, 486nm cyan, 434nm blue, 410nm violet)
+            } else if (fromN >= 4 && Math.random() < 0.35) {
+                toN = 3;
+            }
+
+            const tData = getTransitionData(fromN, toN);
+            const rNow = BOHR_SHELL_RADII[fromN];
+            const ex = Math.cos(bohrState.angle) * rNow;
+            const ey = Math.sin(bohrState.angle) * rNow;
+
+            // Emit an outgoing wavy photon packet in a clear outward direction
+            const outAngle = bohrState.angle + (Math.random() - 0.5) * 0.9;
+            bohrState.emittedPhotons.push({
+                x: ex,
+                y: ey,
+                angle: outAngle,
+                speed: 3.4,
+                dist: 0,
+                color: tData.color,
+                nm: tData.nm,
+                phase: 0
+            });
+
+            bohrState.currentN = toN;
+            bohrState.relaxTimer = toN > 1 ? 65 : 0;
+            bohrState.lastTransition = {
+                fromN,
+                toN,
+                color: tData.color,
+                type: 'emit',
+                timer: 55,
+                maxTimer: 55
+            };
+
+            recordSpectrometerLine(tData.nm, tData.color);
+            document.getElementById('telemetryReadout').textContent =
+                `Electron relaxed n = ${fromN} → n = ${toN}, emitting a ${tData.nm} nm photon wave packet!`;
+        }
+
+        // Helper: Draw a PhET-style glowing photon orb + sinusoidal wave packet
+        function drawWavyPhotonPacket(ctx, x, y, angle, color, phase, showWaveTail = true) {
+            ctx.save();
+            ctx.translate(x, y);
+            ctx.rotate(angle);
+
+            if (showWaveTail) {
+                ctx.beginPath();
+                const tailLen = 28;
+                for (let i = -tailLen; i <= 4; i++) {
+                    const env = Math.sin(((i + tailLen) / (tailLen + 4)) * Math.PI);
+                    const wy = Math.sin(i * 0.55 - phase) * 5.5 * env;
+                    if (i === -tailLen) ctx.moveTo(i, wy);
+                    else ctx.lineTo(i, wy);
+                }
+                ctx.strokeStyle = color;
+                ctx.lineWidth = 2.2;
+                ctx.shadowColor = color;
+                ctx.shadowBlur = 8;
+                ctx.stroke();
+            }
+
+            // Glowing PhET-style circular photon core with bright center
+            const grad = ctx.createRadialGradient(0, 0, 1, 0, 0, 9.5);
+            grad.addColorStop(0, '#FFFFFF');
+            grad.addColorStop(0.38, color);
+            grad.addColorStop(1, 'rgba(0,0,0,0)');
+
+            ctx.beginPath();
+            ctx.arc(0, 0, 9.5, 0, Math.PI * 2);
+            ctx.fillStyle = grad;
+            ctx.fill();
+
+            ctx.restore();
+        }
+
+        // Helper: Draw PhET-style Electron Energy Level diagram overlay on right side of Bohr stage
+        function drawBohrEnergyLevelOverlay(ctx, stageW, stageH) {
+            const boxW = 148;
+            const boxH = 250;
+            const boxX = stageW - boxW - 16;
+            const boxY = Math.max(58, (stageH - boxH) / 2);
+
+            ctx.save();
+
+            // Panel Background
+            ctx.fillStyle = 'rgba(9, 13, 22, 0.88)';
+            ctx.strokeStyle = '#2B3548';
+            ctx.lineWidth = 1.2;
+            ctx.beginPath();
+            ctx.roundRect(boxX, boxY, boxW, boxH, 8);
+            ctx.fill();
+            ctx.stroke();
+
+            // Header Title
+            ctx.fillStyle = '#F8FAFC';
+            ctx.font = '700 10.5px Inter, sans-serif';
+            ctx.textAlign = 'left';
+            ctx.fillText('Electron Energy Level', boxX + 12, boxY + 18);
+
+            ctx.strokeStyle = 'rgba(255,255,255,0.08)';
+            ctx.beginPath();
+            ctx.moveTo(boxX, boxY + 26);
+            ctx.lineTo(boxX + boxW, boxY + 26);
+            ctx.stroke();
+
+            // Vertical "Energy ↑" axis
+            const axisX = boxX + 20;
+            const topY = boxY + 42;
+            const botY = boxY + boxH - 18;
+
+            ctx.strokeStyle = '#64748B';
+            ctx.lineWidth = 1.2;
+            ctx.beginPath();
+            ctx.moveTo(axisX, botY);
+            ctx.lineTo(axisX, topY);
+            ctx.lineTo(axisX - 3.5, topY + 6);
+            ctx.moveTo(axisX, topY);
+            ctx.lineTo(axisX + 3.5, topY + 6);
+            ctx.stroke();
+
+            ctx.save();
+            ctx.translate(boxX + 11, (topY + botY) / 2);
+            ctx.rotate(-Math.PI / 2);
+            ctx.fillStyle = '#94A3B8';
+            ctx.font = '600 9.5px Inter, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText('Energy', 0, 0);
+            ctx.restore();
+
+            // Rung Y positions for n = 1..6 (spaced like -13.6/n^2 just like PhET)
+            const rungY = {
+                1: botY - 4,
+                2: topY + 92,
+                3: topY + 52,
+                4: topY + 30,
+                5: topY + 15,
+                6: topY + 4
+            };
+
+            const rungStartX = axisX + 12;
+            const rungEndX = boxX + boxW - 44;
+
+            for (let n = 1; n <= 6; n++) {
+                const y = rungY[n];
+                const isCurrent = Math.round(bohrState.displayN) === n;
+
+                ctx.strokeStyle = isCurrent ? '#38BDF8' : '#94A3B8';
+                ctx.lineWidth = isCurrent ? 2 : 1.2;
+                ctx.beginPath();
+                ctx.moveTo(rungStartX, y);
+                ctx.lineTo(rungEndX, y);
+                ctx.stroke();
+
+                ctx.fillStyle = isCurrent ? '#38BDF8' : '#CBD5E1';
+                ctx.font = `${isCurrent ? '700' : '500'} 10px "JetBrains Mono", monospace`;
+                ctx.textAlign = 'left';
+                ctx.fillText(`n = ${n}`, rungEndX + 6, y + 3);
+            }
+
+            // Draw wavy transition squiggle arrow if a jump just happened
+            if (bohrState.lastTransition && bohrState.lastTransition.timer > 0) {
+                const tr = bohrState.lastTransition;
+                const y1 = rungY[tr.fromN];
+                const y2 = rungY[tr.toN];
+                const midX = (rungStartX + rungEndX) / 2;
+
+                ctx.save();
+                ctx.strokeStyle = tr.color;
+                ctx.lineWidth = 1.8;
+                ctx.beginPath();
+                const steps = Math.max(12, Math.abs(y2 - y1));
+                for (let s = 0; s <= steps; s++) {
+                    const t = s / steps;
+                    const py = y1 + (y2 - y1) * t;
+                    const px = midX + Math.sin(s * 0.9 - simTime * 12) * 4.5;
+                    if (s === 0) ctx.moveTo(px, py);
+                    else ctx.lineTo(px, py);
+                }
+                ctx.stroke();
+
+                // Arrowhead at destination rung y2
+                const dir = y2 > y1 ? 1 : -1;
+                ctx.fillStyle = tr.color;
+                ctx.beginPath();
+                ctx.moveTo(midX, y2);
+                ctx.lineTo(midX - 4, y2 - dir * 6);
+                ctx.lineTo(midX + 4, y2 - dir * 6);
+                ctx.closePath();
+                ctx.fill();
+                ctx.restore();
+            }
+
+            // Draw glowing cyan electron bead on its current energy level
+            const eY = rungY[bohrState.currentN] || rungY[1];
+            const eX = (rungStartX + rungEndX) / 2;
+
+            ctx.beginPath();
+            ctx.arc(eX, eY - 5, 5.5, 0, Math.PI * 2);
+            ctx.fillStyle = '#38BDF8';
+            ctx.shadowColor = '#38BDF8';
+            ctx.shadowBlur = 10;
+            ctx.fill();
+            ctx.shadowBlur = 0;
+
+            ctx.fillStyle = '#090D16';
+            ctx.font = 'bold 9px JetBrains Mono';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('−', eX, eY - 4.5);
+
+            ctx.restore();
+        }
+
+        // DOM Elements
+        const simCanvas = document.getElementById('simCanvas');
+        const simCtx = simCanvas.getContext('2d');
+        const simStageWrapper = document.getElementById('simStageWrapper');
+
+        const compCanvasA = document.getElementById('compCanvasA');
+        const compCtxA = compCanvasA.getContext('2d');
+        const compStageA = document.getElementById('compStageA');
+
+        const compCanvasB = document.getElementById('compCanvasB');
+        const compCtxB = compCanvasB.getContext('2d');
+        const compStageB = document.getElementById('compStageB');
+
+        // Pre-computed Quantum Cloud Points for smooth 3D rendering
+        const quantumCloudDots = Array.from({ length: 130 }, () => {
+            const r = Math.pow(Math.random(), 1.35) * 115;
+            const theta = Math.random() * Math.PI * 2;
+            const speed = (Math.random() - 0.5) * 0.8;
+            const size = Math.random() * 2 + 1;
+            return { r, theta, speed, size };
+        });
+
+        /* =========================================
+           CANVAS RESIZE OBSERVER (Prevents 0x0 or shifting bugs)
+           ========================================= */
+        function syncCanvasDimensions() {
+            const dpr = window.devicePixelRatio || 1;
+
+            if (simStageWrapper.clientWidth > 0 && simStageWrapper.clientHeight > 0) {
+                simCanvas.width = simStageWrapper.clientWidth * dpr;
+                simCanvas.height = simStageWrapper.clientHeight * dpr;
+                simCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+            }
+
+            if (compStageA.clientWidth > 0 && compStageA.clientHeight > 0) {
+                compCanvasA.width = compStageA.clientWidth * dpr;
+                compCanvasA.height = compStageA.clientHeight * dpr;
+                compCtxA.setTransform(dpr, 0, 0, dpr, 0, 0);
+            }
+
+            if (compStageB.clientWidth > 0 && compStageB.clientHeight > 0) {
+                compCanvasB.width = compStageB.clientWidth * dpr;
+                compCanvasB.height = compStageB.clientHeight * dpr;
+                compCtxB.setTransform(dpr, 0, 0, dpr, 0, 0);
+            }
+        }
+
+        const resizeObserver = new ResizeObserver(() => {
+            syncCanvasDimensions();
+        });
+        resizeObserver.observe(simStageWrapper);
+        resizeObserver.observe(compStageA);
+        resizeObserver.observe(compStageB);
+        window.addEventListener('resize', syncCanvasDimensions);
+
+        /* =========================================
+           3D-STYLED ATOMIC MODEL RENDERER
+           ========================================= */
+        function renderAtomModel3D(ctx, modelKey, width, height, time, scale = 1.0) {
+            const cx = width / 2;
+            const cy = height / 2;
+
+            ctx.save();
+            ctx.translate(cx, cy);
+            ctx.scale(scale, scale);
+
+            if (modelKey === 'dalton') {
+                // Outer ambient purple halo
+                const halo = ctx.createRadialGradient(0, 0, 65, 0, 0, 128);
+                halo.addColorStop(0, 'rgba(168, 85, 247, 0.32)');
+                halo.addColorStop(1, 'rgba(168, 85, 247, 0)');
+                ctx.beginPath();
+                ctx.arc(0, 0, 128, 0, Math.PI * 2);
+                ctx.fillStyle = halo;
+                ctx.fill();
+
+                // 3D Billiard Ball Sphere (matches video purple/violet 3D sphere)
+                const sphereGrad = ctx.createRadialGradient(-28, -28, 8, 0, 0, 86);
+                sphereGrad.addColorStop(0, '#F3E8FF');
+                sphereGrad.addColorStop(0.22, '#C084FC');
+                sphereGrad.addColorStop(0.65, '#7E22CE');
+                sphereGrad.addColorStop(1, '#3B0764');
+
+                ctx.beginPath();
+                ctx.arc(0, 0, 86, 0, Math.PI * 2);
+                ctx.fillStyle = sphereGrad;
+                ctx.fill();
+
+                ctx.lineWidth = 1.5;
+                ctx.strokeStyle = 'rgba(216, 180, 254, 0.45)';
+                ctx.stroke();
+            }
+            else if (modelKey === 'thomson') {
+                // Positive Pudding Sphere
+                const puddingHalo = ctx.createRadialGradient(0, 0, 60, 0, 0, 125);
+                puddingHalo.addColorStop(0, 'rgba(244, 63, 94, 0.25)');
+                puddingHalo.addColorStop(1, 'rgba(244, 63, 94, 0)');
+                ctx.beginPath();
+                ctx.arc(0, 0, 125, 0, Math.PI * 2);
+                ctx.fillStyle = puddingHalo;
+                ctx.fill();
+
+                const puddingGrad = ctx.createRadialGradient(-25, -25, 12, 0, 0, 92);
+                puddingGrad.addColorStop(0, 'rgba(251, 113, 133, 0.78)');
+                puddingGrad.addColorStop(0.6, 'rgba(225, 29, 72, 0.65)');
+                puddingGrad.addColorStop(1, 'rgba(136, 19, 55, 0.85)');
+
+                ctx.beginPath();
+                ctx.arc(0, 0, 92, 0, Math.PI * 2);
+                ctx.fillStyle = puddingGrad;
+                ctx.fill();
+                ctx.strokeStyle = 'rgba(253, 164, 175, 0.4)';
+                ctx.lineWidth = 1.5;
+                ctx.stroke();
+
+                // Embedded Negative Electrons ("Plums")
+                const plums = [
+                    { x: -38, y: -32 }, { x: 36, y: -34 },
+                    { x: -46, y: 20 },  { x: 44, y: 22 },
+                    { x: 0, y: -50 },   { x: 0, y: 48 },
+                    { x: -16, y: 6 },   { x: 20, y: -4 }
+                ];
+
+                plums.forEach((p, i) => {
+                    const jx = p.x + Math.sin(time * 2.5 + i) * 2.2;
+                    const jy = p.y + Math.cos(time * 2.2 + i) * 2.2;
+
+                    const eGrad = ctx.createRadialGradient(jx - 3, jy - 3, 1, jx, jy, 10);
+                    eGrad.addColorStop(0, '#E0F2FE');
+                    eGrad.addColorStop(0.4, '#38BDF8');
+                    eGrad.addColorStop(1, '#0369A1');
+
+                    ctx.beginPath();
+                    ctx.arc(jx, jy, 10, 0, Math.PI * 2);
+                    ctx.fillStyle = eGrad;
+                    ctx.fill();
+
+                    ctx.fillStyle = '#090D16';
+                    ctx.font = 'bold 12px JetBrains Mono';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText('−', jx, jy + 0.5);
+                });
+            }
+            else if (modelKey === 'rutherford') {
+                // 3D Angled Elliptical Orbits
+                const orbitAngles = [0.35, -0.35, 1.15, -1.15];
+                orbitAngles.forEach((ang, idx) => {
+                    ctx.save();
+                    ctx.rotate(ang);
+                    ctx.beginPath();
+                    ctx.ellipse(0, 0, 112, 38, 0, 0, Math.PI * 2);
+                    ctx.strokeStyle = 'rgba(148, 163, 184, 0.28)';
+                    ctx.lineWidth = 1.3;
+                    ctx.stroke();
+
+                    // Orbiting Electron
+                    const eAngle = time * 2.6 + idx * 1.57;
+                    const ex = Math.cos(eAngle) * 112;
+                    const ey = Math.sin(eAngle) * 38;
+
+                    ctx.beginPath();
+                    ctx.arc(ex, ey, 6, 0, Math.PI * 2);
+                    ctx.fillStyle = '#38BDF8';
+                    ctx.shadowColor = '#38BDF8';
+                    ctx.shadowBlur = 10;
+                    ctx.fill();
+                    ctx.restore();
+                });
+
+                // Dense Golden-Orange Nucleus Cluster
+                const nucHalo = ctx.createRadialGradient(0, 0, 2, 0, 0, 32);
+                nucHalo.addColorStop(0, 'rgba(245, 158, 11, 0.9)');
+                nucHalo.addColorStop(1, 'rgba(245, 158, 11, 0)');
+                ctx.beginPath();
+                ctx.arc(0, 0, 32, 0, Math.PI * 2);
+                ctx.fillStyle = nucHalo;
+                ctx.fill();
+
+                const nucGrad = ctx.createRadialGradient(-4, -4, 2, 0, 0, 13);
+                nucGrad.addColorStop(0, '#FEF08A');
+                nucGrad.addColorStop(0.5, '#F59E0B');
+                nucGrad.addColorStop(1, '#B45309');
+                ctx.beginPath();
+                ctx.arc(0, 0, 13, 0, Math.PI * 2);
+                ctx.fillStyle = nucGrad;
+                ctx.fill();
+            }
+            else if (modelKey === 'bohr') {
+                // Smoothly interpolate displayed shell radius during shell jumps
+                bohrState.displayN += (bohrState.currentN - bohrState.displayN) * 0.16;
+                bohrState.angle += 0.045 / Math.sqrt(Math.max(1, bohrState.displayN));
+
+                // Handle spontaneous relaxation countdown when electron is in an excited shell (n > 1)
+                if (scale === 1.0 && bohrState.currentN > 1) {
+                    bohrState.relaxTimer--;
+                    if (bohrState.relaxTimer <= 0) {
+                        triggerBohrRelaxation();
+                    }
+                }
+                if (scale === 1.0 && bohrState.lastTransition && bohrState.lastTransition.timer > 0) {
+                    bohrState.lastTransition.timer--;
+                }
+
+                // Draw 6 Concentric Quantized Shells (n = 1..6) like PhET video
+                for (let n = 1; n <= 6; n++) {
+                    const r = BOHR_SHELL_RADII[n];
+                    const isOccupied = Math.round(bohrState.displayN) === n;
+
+                    ctx.beginPath();
+                    ctx.arc(0, 0, r, 0, Math.PI * 2);
+                    ctx.setLineDash([4, 5]);
+                    ctx.strokeStyle = isOccupied
+                        ? 'rgba(163, 230, 53, 0.78)'
+                        : 'rgba(148, 163, 184, 0.32)';
+                    ctx.lineWidth = isOccupied ? 1.8 : 1.1;
+                    ctx.stroke();
+                    ctx.setLineDash([]);
+                }
+
+                // Draw expanding absorption/transition ripples
+                for (let i = bohrState.absorptionRipples.length - 1; i >= 0; i--) {
+                    const rp = bohrState.absorptionRipples[i];
+                    rp.r += (rp.targetR - rp.r) * 0.2;
+                    rp.alpha -= 0.035;
+                    if (rp.alpha <= 0) {
+                        bohrState.absorptionRipples.splice(i, 1);
+                        continue;
+                    }
+                    ctx.beginPath();
+                    ctx.arc(0, 0, rp.r, 0, Math.PI * 2);
+                    ctx.strokeStyle = rp.color;
+                    ctx.globalAlpha = rp.alpha;
+                    ctx.lineWidth = 2.5;
+                    ctx.stroke();
+                    ctx.globalAlpha = 1.0;
+                }
+
+                // Central Proton / Nucleus (Red glowing sphere)
+                const nucGrad = ctx.createRadialGradient(-2, -2, 1, 0, 0, 9);
+                nucGrad.addColorStop(0, '#FCA5A5');
+                nucGrad.addColorStop(0.5, '#EF4444');
+                nucGrad.addColorStop(1, '#991B1B');
+                ctx.beginPath();
+                ctx.arc(0, 0, 9, 0, Math.PI * 2);
+                ctx.fillStyle = nucGrad;
+                ctx.shadowColor = '#EF4444';
+                ctx.shadowBlur = 10;
+                ctx.fill();
+                ctx.shadowBlur = 0;
+
+                // Interpolated radius for the single jumping electron
+                const lowIdx = Math.max(1, Math.min(6, Math.floor(bohrState.displayN)));
+                const highIdx = Math.max(1, Math.min(6, Math.ceil(bohrState.displayN)));
+                const frac = bohrState.displayN - lowIdx;
+                const currentRadius = BOHR_SHELL_RADII[lowIdx] + (BOHR_SHELL_RADII[highIdx] - BOHR_SHELL_RADII[lowIdx]) * frac;
+
+                const ex = Math.cos(bohrState.angle) * currentRadius;
+                const ey = Math.sin(bohrState.angle) * currentRadius;
+
+                // Glowing Cyan Orbiting Electron
+                ctx.beginPath();
+                ctx.arc(ex, ey, 6.5, 0, Math.PI * 2);
+                ctx.fillStyle = '#38BDF8';
+                ctx.shadowColor = '#38BDF8';
+                ctx.shadowBlur = 14;
+                ctx.fill();
+                ctx.shadowBlur = 0;
+
+                ctx.fillStyle = '#090D16';
+                ctx.font = 'bold 10px JetBrains Mono';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText('−', ex, ey + 0.5);
+
+                // Update & Draw Outgoing Emitted Wavy Photon Packets
+                if (scale === 1.0) {
+                    for (let i = bohrState.emittedPhotons.length - 1; i >= 0; i--) {
+                        const ep = bohrState.emittedPhotons[i];
+                        ep.x += Math.cos(ep.angle) * ep.speed;
+                        ep.y += Math.sin(ep.angle) * ep.speed;
+                        ep.dist += ep.speed;
+                        ep.phase += 0.45;
+
+                        drawWavyPhotonPacket(ctx, ep.x, ep.y, ep.angle, ep.color, ep.phase, true);
+
+                        if (ep.dist > Math.max(width, height)) {
+                            bohrState.emittedPhotons.splice(i, 1);
+                        }
+                    }
+
+                    // Live bottom-right "n = X" readout near the Bohr rings
+                    ctx.fillStyle = '#F8FAFC';
+                    ctx.font = 'italic 700 16px "JetBrains Mono", monospace';
+                    ctx.textAlign = 'left';
+                    ctx.fillText(`n = ${bohrState.currentN}`, 105, 132);
+                }
+            }
+            else if (modelKey === 'schrodinger') {
+                // Pulsing Quantum Probability Density Cloud (|ψ|²)
+                const pulse = Math.sin(time * 2.2) * 8;
+                const cloudGrad = ctx.createRadialGradient(0, 0, 4, 0, 0, 125 + pulse);
+                cloudGrad.addColorStop(0, 'rgba(56, 189, 248, 0.85)');
+                cloudGrad.addColorStop(0.28, 'rgba(56, 189, 248, 0.42)');
+                cloudGrad.addColorStop(0.62, 'rgba(168, 85, 247, 0.16)');
+                cloudGrad.addColorStop(1, 'rgba(15, 23, 42, 0)');
+
+                ctx.beginPath();
+                ctx.arc(0, 0, 125 + pulse, 0, Math.PI * 2);
+                ctx.fillStyle = cloudGrad;
+                ctx.fill();
+
+                // Probability Orbital Nodes
+                quantumCloudDots.forEach((pt) => {
+                    pt.theta += pt.speed * 0.02;
+                    const x = Math.cos(pt.theta) * pt.r;
+                    const y = Math.sin(pt.theta) * pt.r;
+                    ctx.beginPath();
+                    ctx.arc(x, y, pt.size, 0, Math.PI * 2);
+                    ctx.fillStyle = 'rgba(186, 230, 253, 0.65)';
+                    ctx.fill();
+                });
+
+                // Core Nucleus
+                ctx.beginPath();
+                ctx.arc(0, 0, 7, 0, Math.PI * 2);
+                ctx.fillStyle = '#F8FAFC';
+                ctx.shadowColor = '#38BDF8';
+                ctx.shadowBlur = 12;
+                ctx.fill();
+                ctx.shadowBlur = 0;
+            }
+
+            ctx.restore();
+        }
+
+        /* =========================================
+           PARTICLE BEAM PHYSICS ENGINE
+           ========================================= */
+        class BeamParticle {
+            constructor(startY, type, energy, modelKey) {
+                this.x = 18;
+                this.y = startY;
+                this.type = type;
+                const baseSpeed = 2.6 + energy * 0.6;
+                this.vx = baseSpeed;
+                this.vy = 0;
+                this.bounced = false;
+                this.absorbed = false;
+                this.phase = Math.random() * Math.PI * 2;
+                this.history = [{ x: this.x, y: this.y }];
+
+                // In Bohr mode or Photon mode, assign realistic spectral photon colors & target shells
+                const photonSpec = BOHR_PALETTE[Math.floor(Math.random() * BOHR_PALETTE.length)];
+                this.targetN = photonSpec.targetN;
+                this.photonNm = photonSpec.nm;
+
+                if (type === 'alpha') {
+                    this.color = '#A3E635';
+                    this.glow = 'rgba(163, 230, 53, 0.8)';
+                    this.radius = 4.2;
+                    this.charge = 2;
+                } else if (type === 'proton') {
+                    this.color = '#38BDF8';
+                    this.glow = 'rgba(56, 189, 248, 0.8)';
+                    this.radius = 3.5;
+                    this.charge = 1;
+                } else if (type === 'electron') {
+                    this.color = '#60A5FA';
+                    this.glow = 'rgba(96, 165, 250, 0.85)';
+                    this.radius = 3.2;
+                    this.charge = -1;
+                } else {
+                    // Photon (multi-wavelength colored orb like PhET video)
+                    this.color = photonSpec.color;
+                    this.glow = photonSpec.color;
+                    this.radius = 4.5;
+                    this.charge = 0;
+                }
+            }
+
+            update(cx, cy, modelKey) {
+                this.phase += 0.35;
+                this.history.push({ x: this.x, y: this.y });
+                if (this.history.length > 65) {
+                    this.history.shift();
+                }
+
+                const dx = this.x - cx;
+                const dy = this.y - cy;
+                const dist = Math.hypot(dx, dy);
+
+                if (modelKey === 'dalton') {
+                    // Hard Solid Sphere Reflection at radius = 88
+                    const hitRadius = 88;
+                    if (!this.bounced && dist <= hitRadius) {
+                        const nx = dx / (dist || 1);
+                        const ny = dy / (dist || 1);
+                        const dot = this.vx * nx + this.vy * ny;
+                        if (dot < 0) {
+                            this.vx = this.vx - 2 * dot * nx;
+                            this.vy = this.vy - 2 * dot * ny;
+                            this.x = cx + nx * (hitRadius + 2);
+                            this.y = cy + ny * (hitRadius + 2);
+                            this.bounced = true;
+                        }
+                    }
+                } else if (modelKey === 'thomson') {
+                    // Diffuse positive sphere: passes straight through with tiny wobble
+                    if (dist < 92 && this.charge !== 0) {
+                        this.vy += (dy / 92) * 0.018;
+                    }
+                } else if (modelKey === 'bohr') {
+                    // Check if photon or energetic particle excites the Bohr electron to a higher shell!
+                    const curR = BOHR_SHELL_RADII[bohrState.currentN] || 26;
+                    const ex = cx + Math.cos(bohrState.angle) * curR;
+                    const ey = cy + Math.sin(bohrState.angle) * curR;
+                    const distToElectron = Math.hypot(this.x - ex, this.y - ey);
+
+                    if (!this.absorbed && bohrState.currentN === 1 && (distToElectron < 34 || (Math.abs(dy) < 38 && Math.abs(dx) < 18))) {
+                        if (this.type === 'photon' || Math.random() < 0.45) {
+                            const jumpTo = Math.max(2, Math.min(6, this.targetN));
+                            triggerBohrExcitation(jumpTo, this.color);
+                            if (this.type === 'photon') {
+                                this.absorbed = true; // Photon is absorbed by the electron!
+                                return;
+                            }
+                        }
+                    }
+
+                    // Non-photon charged particles still experience nuclear Coulomb interaction
+                    if (this.charge !== 0 && dist < 150 && dist > 6) {
+                        const force = (180 * this.charge) / (dist * dist);
+                        this.vx += (dx / dist) * force;
+                        this.vy += (dy / dist) * force;
+                    }
+                } else if (modelKey === 'rutherford' || modelKey === 'schrodinger') {
+                    // Coulomb Electrostatic Force near central nucleus
+                    if (this.charge !== 0 && dist < 175 && dist > 6) {
+                        const kFactor = modelKey === 'schrodinger' ? 170 : 230;
+                        const force = (kFactor * this.charge) / (dist * dist);
+                        this.vx += (dx / dist) * force;
+                        this.vy += (dy / dist) * force;
+                    }
+                }
+
+                this.x += this.vx;
+                this.y += this.vy;
+            }
+
+            draw(ctx, drawTrace) {
+                if (this.absorbed) return;
+
+                if (drawTrace && this.history.length > 1 && this.type !== 'photon') {
+                    ctx.save();
+                    ctx.beginPath();
+                    ctx.moveTo(this.history[0].x, this.history[0].y);
+                    for (let i = 1; i < this.history.length; i++) {
+                        ctx.lineTo(this.history[i].x, this.history[i].y);
+                    }
+                    ctx.strokeStyle = this.color;
+                    ctx.globalAlpha = 0.55;
+                    ctx.lineWidth = 1.8;
+                    ctx.stroke();
+                    ctx.restore();
+                }
+
+                if (this.type === 'photon') {
+                    drawWavyPhotonPacket(ctx, this.x, this.y, 0, this.color, this.phase, drawTrace);
+                } else {
+                    ctx.save();
+                    ctx.beginPath();
+                    ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                    ctx.fillStyle = this.color;
+                    ctx.shadowColor = this.glow;
+                    ctx.shadowBlur = 10;
+                    ctx.fill();
+                    ctx.restore();
+                }
+            }
+        }
+
+        /* =========================================
+           MAIN ANIMATION LOOP
+           ========================================= */
+        let frameCounter = 0;
+
+        function animateLoop() {
+            simTime += 0.022;
+            frameCounter++;
+
+            if (activeTab === 'tab-sim') {
+                const w = simStageWrapper.clientWidth;
+                const h = simStageWrapper.clientHeight;
+                simCtx.clearRect(0, 0, w, h);
+
+                // Render Atom Model in Center
+                renderAtomModel3D(simCtx, currentModel, w, h, simTime, 1.0);
+
+                // In Bohr Mode, render the PhET-style Electron Energy Level overlay on the right of the canvas
+                if (currentModel === 'bohr' && w > 520) {
+                    drawBohrEnergyLevelOverlay(simCtx, w, h);
+                }
+
+                // Spawn Beam Particles
+                const spawnInterval = beamDensity === 1 ? 18 : (beamDensity === 2 ? 10 : 5);
+                if (beamActive && frameCounter % spawnInterval === 0 && h > 0) {
+                    const cy = h / 2;
+                    const offsetY = (Math.random() - 0.5) * 185;
+                    particles.push(new BeamParticle(cy + offsetY, particleType, beamEnergy, currentModel));
+                }
+
+                // Update & Draw Particles
+                const cx = w / 2;
+                const cy = h / 2;
+                for (let i = particles.length - 1; i >= 0; i--) {
+                    const p = particles[i];
+                    p.update(cx, cy, currentModel);
+                    p.draw(simCtx, showTraces);
+
+                    if (p.absorbed || p.x < -30 || p.x > w + 30 || p.y < -30 || p.y > h + 30) {
+                        particles.splice(i, 1);
+                    }
+                }
+            } else if (activeTab === 'tab-compare') {
+                // Render both comparison 3D models side-by-side without alpha rays
+                const wA = compStageA.clientWidth;
+                const hA = compStageA.clientHeight;
+                if (wA > 0 && hA > 0) {
+                    compCtxA.clearRect(0, 0, wA, hA);
+                    const modelA = document.getElementById('compSelectA').value;
+                    renderAtomModel3D(compCtxA, modelA, wA, hA, simTime, 0.85);
+                }
+
+                const wB = compStageB.clientWidth;
+                const hB = compStageB.clientHeight;
+                if (wB > 0 && hB > 0) {
+                    compCtxB.clearRect(0, 0, wB, hB);
+                    const modelB = document.getElementById('compSelectB').value;
+                    renderAtomModel3D(compCtxB, modelB, wB, hB, simTime, 0.85);
+                }
+            }
+
+            requestAnimationFrame(animateLoop);
+        }
+
+        /* =========================================
+           UI SYNCHRONIZATION & EVENT HANDLERS
+           ========================================= */
+        function updateSimulationUI() {
+            const data = ATOMIC_MODELS[currentModel];
+            document.getElementById('stageModelTitle').textContent = data.shortTitle;
+            document.getElementById('stageModelSub').textContent = data.subtitle;
+            document.getElementById('tkPostulate').textContent = data.postulate;
+            document.getElementById('tkScattering').textContent = data.scattering;
+            document.getElementById('tkFlaw').textContent = data.flaw;
+            document.getElementById('telemetryReadout').textContent = data.scattering;
+        }
+
+        function updateCompareCardsUI() {
+            const keyA = document.getElementById('compSelectA').value;
+            const keyB = document.getElementById('compSelectB').value;
+            const dA = ATOMIC_MODELS[keyA];
+            const dB = ATOMIC_MODELS[keyB];
+
+            document.getElementById('compYearA').textContent = dA.year;
+            document.getElementById('compTitleA').textContent = dA.fullName;
+            document.getElementById('compSubA').textContent = dA.subtitle;
+            document.getElementById('compBodyA').innerHTML = `
+                <div class="comp-info-box">
+                    <h5>CORE CONCEPT</h5>
+                    <p>${dA.postulate}</p>
+                </div>
+                <div class="comp-info-box">
+                    <h5>PARTICLE BEAM REACTION</h5>
+                    <p>${dA.scattering}</p>
+                </div>
+                <div class="comp-info-box merit">
+                    <h5>MAJOR BREAKTHROUGH (MERIT)</h5>
+                    <p>${dA.merit}</p>
+                </div>
+                <div class="comp-info-box flaw">
+                    <h5>FATAL FLAW / DEMERIT</h5>
+                    <p>${dA.flaw}</p>
+                </div>
+            `;
+
+            document.getElementById('compYearB').textContent = dB.year;
+            document.getElementById('compTitleB').textContent = dB.fullName;
+            document.getElementById('compSubB').textContent = dB.subtitle;
+            document.getElementById('compBodyB').innerHTML = `
+                <div class="comp-info-box">
+                    <h5>CORE CONCEPT</h5>
+                    <p>${dB.postulate}</p>
+                </div>
+                <div class="comp-info-box">
+                    <h5>PARTICLE BEAM REACTION</h5>
+                    <p>${dB.scattering}</p>
+                </div>
+                <div class="comp-info-box merit">
+                    <h5>MAJOR BREAKTHROUGH (MERIT)</h5>
+                    <p>${dB.merit}</p>
+                </div>
+                <div class="comp-info-box flaw">
+                    <h5>FATAL FLAW / DEMERIT</h5>
+                    <p>${dB.flaw}</p>
+                </div>
+            `;
+        }
+
+        function renderScientistResearchCards() {
+            const container = document.getElementById('researchCardsContainer');
+            container.innerHTML = Object.values(ATOMIC_MODELS).map(m => `
+                <div class="scientist-card">
+                    <div class="scientist-card-top">
+                        <div>
+                            <span class="year-tag">${m.year}</span>
+                            <h3>${m.fullName}</h3>
+                            <span>${m.subtitle}</span>
+                        </div>
+                    </div>
+                    <div class="comp-info-box">
+                        <h5>EXPERIMENTAL BASIS</h5>
+                        <p>${m.experiment}</p>
+                    </div>
+                    <div class="comp-info-box">
+                        <h5>CORE POSTULATE</h5>
+                        <p>${m.postulate}</p>
+                    </div>
+                    <div class="comp-info-box merit">
+                        <h5>SCIENTIFIC MERITS</h5>
+                        <p>${m.merit}</p>
+                    </div>
+                    <div class="comp-info-box flaw">
+                        <h5>DEMERITS &amp; LIMITATIONS</h5>
+                        <p>${m.flaw}</p>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Top Navigation Tab Switching
+        document.querySelectorAll('.nav-tab').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.nav-tab').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+
+                const targetId = btn.getAttribute('data-tab');
+                document.querySelectorAll('.tab-view').forEach(v => v.classList.remove('active'));
+                document.getElementById(targetId).classList.add('active');
+
+                activeTab = targetId;
+                requestAnimationFrame(syncCanvasDimensions);
+            });
+        });
+
+        // Model Selection Buttons (Right Panel)
+        document.querySelectorAll('.model-card-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.model-card-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+
+                currentModel = btn.getAttribute('data-model');
+                const idx = btn.getAttribute('data-idx');
+                document.getElementById('modelIndexCounter').textContent = `${idx} / 5`;
+
+                // Automatically switch to Photon beam when selecting Bohr model so the user immediately sees PhET photon shell jumping
+                if (currentModel === 'bohr') {
+                    particleType = 'photon';
+                    document.querySelectorAll('.p-seg-btn').forEach(b => {
+                        b.classList.toggle('active', b.getAttribute('data-ptype') === 'photon');
+                    });
+                }
+
+                particles = [];
+                updateSimulationUI();
+            });
+        });
+
+        // Beam Emission Toggle
+        const beamToggleBtn = document.getElementById('beamToggleBtn');
+        const beamStatusBadge = document.getElementById('beamStatusBadge');
+        const beamStatusText = document.getElementById('beamStatusText');
+
+        beamToggleBtn.addEventListener('click', () => {
+            beamActive = !beamActive;
+            if (beamActive) {
+                beamToggleBtn.textContent = '⏸ Pause Beam Emission';
+                beamToggleBtn.classList.remove('paused');
+                beamStatusBadge.classList.add('live');
+                beamStatusText.textContent = 'ACTIVE';
+            } else {
+                beamToggleBtn.textContent = '▶ Start Beam Emission';
+                beamToggleBtn.classList.add('paused');
+                beamStatusBadge.classList.remove('live');
+                beamStatusText.textContent = 'PAUSED';
+            }
+        });
+
+        // Particle Type Selector
+        document.querySelectorAll('.p-seg-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.p-seg-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                particleType = btn.getAttribute('data-ptype');
+                particles = [];
+            });
+        });
+
+        // Sliders & Switches
+        document.getElementById('energySlider').addEventListener('input', (e) => {
+            beamEnergy = parseFloat(e.target.value);
+            document.getElementById('energyValLabel').textContent = `${beamEnergy.toFixed(1)} MeV`;
+        });
+
+        const densityNames = { 1: 'Low', 2: 'Medium', 3: 'High' };
+        document.getElementById('densitySlider').addEventListener('input', (e) => {
+            beamDensity = parseInt(e.target.value, 10);
+            document.getElementById('densityValLabel').textContent = densityNames[beamDensity];
+        });
+
+        document.getElementById('traceToggle').addEventListener('change', (e) => {
+            showTraces = e.target.checked;
+        });
+
+        document.getElementById('resetStageBtn').addEventListener('click', () => {
+            particles = [];
+            bohrState.currentN = 1;
+            bohrState.displayN = 1;
+            bohrState.emittedPhotons = [];
+            bohrState.absorptionRipples = [];
+            bohrState.recordedLines = [];
+            const track = document.getElementById('specBarTrack');
+            if (track) track.innerHTML = '';
+        });
+
+        // Compare Dropdowns
+        document.getElementById('compSelectA').addEventListener('change', updateCompareCardsUI);
+        document.getElementById('compSelectB').addEventListener('change', updateCompareCardsUI);
+
+        // Dark / Light Mode Toggle (persist preference when browser storage is available)
+        const themeToggleBtn = document.getElementById('themeToggleBtn');
+        function applyTheme(theme) {
+            const safeTheme = theme === 'light' ? 'light' : 'dark';
+            document.documentElement.setAttribute('data-theme', safeTheme);
+            document.getElementById('themeIcon').textContent = safeTheme === 'dark' ? '🌙' : '☀️';
+            document.getElementById('themeLabel').textContent = safeTheme === 'dark' ? 'Dark Mode' : 'Light Mode';
+            try { localStorage.setItem('atomlab-theme', safeTheme); } catch (_) { /* Storage may be disabled in private contexts. */ }
+        }
+        try {
+            const savedTheme = localStorage.getItem('atomlab-theme');
+            if (savedTheme === 'light' || savedTheme === 'dark') applyTheme(savedTheme);
+        } catch (_) { /* Fall back to the theme in the HTML attribute. */ }
+        themeToggleBtn.addEventListener('click', () => {
+            const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+            applyTheme(isDark ? 'light' : 'dark');
+        });
+
+        // Initialize Application
+        window.onload = function () {
+            updateSimulationUI();
+            updateCompareCardsUI();
+            renderScientistResearchCards();
+            syncCanvasDimensions();
+            animateLoop();
+        };
+    </script>
+</body>
+</html>
